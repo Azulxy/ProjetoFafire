@@ -12,7 +12,7 @@ def mostrar_tela_inicial(tela, frames, indice_frame, clock):
     fonte_titulo = pygame.font.Font(config.CAMINHO_FONTE, 64)
     fonte_texto = pygame.font.Font(config.CAMINHO_FONTE, 32)
 
-    titulo = config.cores_textos("GUARDIÃO DO OCEANO", fonte_titulo, (0, 150, 255), (0, 255, 100), borda=4)
+    titulo = config.cores_textos("CRISE DO OCEANO", fonte_titulo, (0, 150, 255), (0, 255, 100), borda=4)
     frase1 = config.cores_textos("TODO OCEANO COMEÇA COM UMA GOTA.", fonte_texto, (9, 28, 176), (0, 150, 255), borda=1)
     frase2 = config.cores_textos("TODO SONHO COMEÇA COM UM PASSO.", fonte_texto, (9, 28, 176), (0, 150, 255), borda=1)
     instrucao = config.cores_textos("PRESSIONE ENTER PARA COMEÇAR", fonte_texto, (255, 200, 0), (255, 50, 50), borda=2)

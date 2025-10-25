@@ -1,8 +1,11 @@
 import pygame
+import jogo
 import config
 import tela_inicial
 import tela_menu
 import tela_config
+
+# COLOCAR O FUNDO E OS SPRITES
 
 def main():
     pygame.init()
@@ -22,7 +25,10 @@ def main():
             indice_menu, indice_frame = tela_menu.mostrar_tela_menu(tela, frames, indice_frame, clock)
 
             if indice_menu == 0:  # Jogar
-                print("Iniciando o jogo...")  
+                voltar_menu = jogo.jogo_init()
+                if not voltar_menu:
+                    rodando = False
+                    break
                 continue
 
             elif indice_menu == 1:  # Configurações

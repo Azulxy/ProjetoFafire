@@ -5,6 +5,17 @@ LARGURA_TELA = 800
 ALTURA_TELA = 600
 FPS = 60
 
+BRANCO = (255, 255, 255)
+PRETO = (0, 0, 0)
+VERMELHO = (255, 0, 0)
+VERDE = (0, 255, 0)
+AZUL = (0, 0, 255)
+CINZA = (128, 128, 128)
+AMARELO = (255, 255, 0)
+
+LARGURA_MUNDO = 2000
+ALTURA_MUNDO= 2000
+
 CAMINHO_FRAMES = "assets/frames"
 CAMINHO_FONTE = "assets/fontes/fonte_pixel.ttf"
 CAMINHO_MUSICA = "assets/sons/musica_intro.mp3"
