@@ -8,6 +8,7 @@ import tela_config
 # COLOCAR O FUNDO E OS SPRITES
 
 def main():
+    pygame.mixer.pre_init(44100, -16, 2, 512)
     pygame.init()
     tela = pygame.display.set_mode((config.LARGURA_TELA, config.ALTURA_TELA))
     frames = config.carregar_frames()

@@ -1,24 +1,30 @@
 import pygame
+import config
 
 class Jogador(pygame.sprite.Sprite):
-    def __init__(self, largura_tela, altura_tela):
+    def __init__(self, x, y):
         super().__init__()
         self.image = pygame.Surface((50, 30))
         self.image.fill((255, 255, 255))
-        self.rect = self.image.get_rect()
-        self.rect.center = (largura_tela // 2, altura_tela - 50)
+        self.rect = self.image.get_rect(center=(x, y))
         self.vel = 5
-        self.largura_tela = largura_tela
+        self.direcao = "direita"
+        self.largura_mundo = config.LARGURA_MUNDO
+        self.altura_mundo = config.ALTURA_MUNDO
 
     def update(self, teclas):
+        # Movimento
         if teclas[pygame.K_LEFT]:
-            self.rect.x -= 5
+            self.rect.x -= self.vel
+            self.direcao = "esquerda"
         if teclas[pygame.K_RIGHT]:
-            self.rect.x += 5
+            self.rect.x += self.vel
+            self.direcao = "direita"
         if teclas[pygame.K_UP]:
-            self.rect.y -= 5
+            self.rect.y -= self.vel
         if teclas[pygame.K_DOWN]:
-            self.rect.y += 5
+            self.rect.y += self.vel
 
-        # Impedir que saia da tela
-        self.rect.x = max(0, min(self.rect.x, self.largura_tela - self.rect.width))
+        # Limites do mundo
+        self.rect.x = max(0, min(self.rect.x, self.largura_mundo - self.rect.width))
+        self.rect.y = max(0, min(self.rect.y, self.altura_mundo - self.rect.height))
