@@ -1,27 +1,36 @@
 import os
 import pygame
 
+# CONFIGURAÇÃO DE TELA
 LARGURA_TELA = 800
 ALTURA_TELA = 600
 FPS = 60
 
+# CORES
 BRANCO = (255, 255, 255)
 PRETO = (0, 0, 0)
 VERMELHO = (255, 0, 0)
 VERDE = (0, 255, 0)
-AZUL = (0, 0, 255)
 CINZA = (128, 128, 128)
 AMARELO = (255, 255, 0)
 
-LARGURA_MUNDO = 2000
-ALTURA_MUNDO= 2000
-
+# PATHS
+CAMINHO_FUNDO = os.path.join(os.path.dirname(__file__), '..', '..', 'assets', 'imagens', 'background.jpg')
 CAMINHO_FRAMES = "assets/frames"
 CAMINHO_FONTE = "assets/fontes/fonte_pixel.ttf"
 CAMINHO_MUSICA = "assets/sons/musica_intro.mp3"
 
+# FUNDO
+FUNDO = pygame.image.load(CAMINHO_FUNDO)
+ESCALA_FUNDO = 0.8
+largura_original, altura_original = FUNDO.get_size()
+LARGURA_MUNDO = int(largura_original * ESCALA_FUNDO)
+ALTURA_MUNDO = int(altura_original * ESCALA_FUNDO)
+FUNDO = pygame.transform.scale(FUNDO, (LARGURA_MUNDO, ALTURA_MUNDO))
+
 CLOCK = pygame.time.Clock()
 
+# Carrega frames de fundo (opcional)
 def carregar_frames():
     frames = []
     if os.path.exists(CAMINHO_FRAMES):
@@ -29,7 +38,7 @@ def carregar_frames():
         for f in lista_frames:
             caminho_frame = os.path.join(CAMINHO_FRAMES, f)
             try:
-                frame = pygame.image.load(caminho_frame).convert()
+                frame = pygame.image.load(caminho_frame).convert_alpha()
                 frame = pygame.transform.scale(frame, (LARGURA_TELA, ALTURA_TELA))
                 frames.append(frame)
             except pygame.error as e:
@@ -41,6 +50,11 @@ def carregar_frames():
         frames = [frame]
     return frames
 
+# DESENHAR FUNDO
+def desenhar_fundo(tela, camera_x=0, camera_y=0):
+    tela.blit(FUNDO, (-camera_x, -camera_y))
+
+# FUNÇÃO DE TEXTO COM GRADIENTE E BORDA
 def cores_textos(texto, fonte, cor1, cor2, borda=3):
     texto_surface = fonte.render(texto, True, (255, 255, 255))
     largura, altura = texto_surface.get_size()
@@ -58,8 +72,7 @@ def cores_textos(texto, fonte, cor1, cor2, borda=3):
     for dx in range(-borda, borda+1):
         for dy in range(-borda, borda+1):
             if dx != 0 or dy != 0:
-                borda_surface.blit(fonte.render(texto, True, (0,0,0)), (dx+borda, dy+borda))
+                borda_surface.blit(fonte.render(texto, True, (0, 0, 0)), (dx+borda, dy+borda))
     
     borda_surface.blit(gradiente, (borda, borda))
-
     return borda_surface
