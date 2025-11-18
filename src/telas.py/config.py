@@ -17,6 +17,8 @@ AMARELO = (255, 255, 0)
 # PATHS
 CAMINHO_FUNDO = os.path.join(os.path.dirname(__file__), '..', '..', 'assets', 'imagens', 'background.jpg')
 CAMINHO_FRAMES = "assets/frames"
+CAMINHO_CORACAO_CHEIO = "assets/imagens/coracao.png"
+CAMINHO_CORACAO_VAZIO = "assets/imagens/coracaovazio.png"
 CAMINHO_FONTE = "assets/fontes/fonte_pixel.ttf"
 CAMINHO_MUSICA = "assets/sons/musica_intro.mp3"
 

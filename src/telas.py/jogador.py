@@ -8,15 +8,21 @@ class Jogador(pygame.sprite.Sprite):
         self.image.fill((255, 255, 0))
         self.rect = self.image.get_rect(topleft=(x, y))
         self.velocidade = velocidade
+        self.alpha = 255
+        self.alpha_sentido = -15 
 
         # Atributos base
         self.vel_base = 5
         self.vel = self.vel_base
-        self.vida = 5
         self.tiros_ativos = 1
         self.vel_tiro = 6
         self.escudo = False
         self.perks_ativos = {}
+        self.vida = 3
+        self.invencivel = False
+        self.tempo_invencivel = 1500
+        self.ultimo_hit = 0
+
 
     def mover(self, teclas):
         velocidade = self.vel
@@ -41,6 +47,38 @@ class Jogador(pygame.sprite.Sprite):
         if self.rect.bottom > config.ALTURA_MUNDO:
             self.rect.bottom = config.ALTURA_MUNDO
 
+    def levar_dano(self, quantidade=1):
+        agora = pygame.time.get_ticks()
+
+        if self.invencivel:
+            return
+
+        self.vida -= quantidade
+        if self.vida < 0:
+            self.vida = 0
+
+        self.invencivel = True
+        self.ultimo_hit = agora
+        self.alpha = 255
+        self.alpha_sentido = -15
+
+    def atualizar_invencibilidade(self):
+        agora = pygame.time.get_ticks()
+
+        if self.invencivel:
+            self.alpha += self.alpha_sentido
+            if self.alpha <= 30 or self.alpha >= 255:
+                self.alpha_sentido *= -1
+
+            self.image.set_alpha(self.alpha)
+
+            if agora - self.ultimo_hit >= self.tempo_invencivel:
+                self.invencivel = False
+                self.image.set_alpha(255)
+                self.alpha = 255
+        else:
+            self.image.set_alpha(255)
+
     def aplicar_perk(self, perk):
         agora = pygame.time.get_ticks()
         duracao = 25000
@@ -49,16 +87,12 @@ class Jogador(pygame.sprite.Sprite):
         # Efeitos das perks
         if perk == "Tiro duplo":
             self.tiros_ativos = 2
-        elif perk == "Velocidade +20%":
+        elif perk == "Aumento de velocidade de movimento":
             self.vel = self.vel_base * 1.2
-        elif perk == "Regenera 1 de vida por 10s":
-            self.vida = min(self.vida + 1, 5)
         elif perk == "Tiros mais rápidos":
-            self.vel_tiro = 10
+            self.vel_tiro = 15
         elif perk == "Escudo protetor":
             self.escudo = True
-        elif perk == "Mais tiros simultâneos":
-            self.tiros_ativos += 1
 
     def atualizar_perks(self):
         agora = pygame.time.get_ticks()

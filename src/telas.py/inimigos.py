@@ -15,80 +15,87 @@ sprite_inimigo = None
 FRAME_LARGURA = 0
 FRAME_ALTURA = 0
 
-def carregar_frames_inimigo(scale=1.0):
+def carregar_frames_inimigo(corte_topo=0):
     global FRAMES_INIMIGO, sprite_inimigo, FRAME_LARGURA, FRAME_ALTURA
     
-    # Verifica se os frames já foram carregados
     if FRAMES_INIMIGO is not None:
         return
 
-    try:
-        # Carrega o sprite sheet (certifique-se de que pygame.init() foi chamado antes desta linha)
-        sprite_inimigo = pygame.image.load(SPRITE_SHEET_PATH).convert_alpha()
-    except pygame.error as e:
-        print(f"Erro ao carregar sprite sheet: {e}")
-        # Trate o erro, talvez retornando uma surface padrão.
-        return
+    sprite_inimigo = pygame.image.load(SPRITE_SHEET_PATH).convert_alpha()
 
     FRAME_LARGURA = sprite_inimigo.get_width() // COLUNAS_INIMIGO
-    FRAME_ALTURA = sprite_inimigo.get_height() // LINHAS_INIMIGO
+    FRAME_ALTURA  = sprite_inimigo.get_height() // LINHAS_INIMIGO
 
     frames = []
+
     for linha in range(LINHAS_INIMIGO):
         for coluna in range(COLUNAS_INIMIGO):
-            rect = pygame.Rect(coluna*FRAME_LARGURA, linha*FRAME_ALTURA, FRAME_LARGURA, FRAME_ALTURA)
-            frame = sprite_inimigo.subsurface(rect).copy().convert_alpha() 
-            
-            if scale != 1.0:
-                frame = pygame.transform.scale(frame, (int(FRAME_LARGURA*scale), int(FRAME_ALTURA*scale)))
-                
+
+            # Frame original do sprite sheet
+            original_rect = pygame.Rect(
+                coluna * FRAME_LARGURA,
+                linha * FRAME_ALTURA,
+                FRAME_LARGURA,
+                FRAME_ALTURA
+            )
+            frame = sprite_inimigo.subsurface(original_rect).copy().convert_alpha()
+
+            # CORTA DO TOPO
+            pixels_corte_topo = int(FRAME_ALTURA * corte_topo)
+
+            # CORTA 15% DA ESQUERDA
+            corte_esquerda = int(FRAME_LARGURA * 0.15)
+
+            cropped_rect = pygame.Rect(
+                corte_esquerda,
+                pixels_corte_topo,
+                FRAME_LARGURA - corte_esquerda,
+                FRAME_ALTURA - pixels_corte_topo
+            )
+
+            frame = frame.subsurface(cropped_rect).copy().convert_alpha()
+
             frames.append(frame)
-    
+
     FRAMES_INIMIGO = frames
+
+
 
 class Inimigo(pygame.sprite.Sprite):
     def __init__(self, jogador, scale=1.0):
         super().__init__()
-        carregar_frames_inimigo(scale=scale)
+        carregar_frames_inimigo(corte_topo=0.3)
+
+
+
         self.jogador = jogador
         self.vel = random.uniform(1.5, 3.0)
-        self.vida = 10
 
-        frame_original = FRAMES_INIMIGO[0]
+        # Frame exibido
+        self.image = FRAMES_INIMIGO[0]
+        self.rect = self.image.get_rect()
 
-        largura_nova = int(frame_original.get_width() * scale)
-        altura_nova = int(frame_original.get_height() * scale)
-        self.image = frame_original
-        
-        # OBTÉM O RECT DA IMAGEM ESCALADA CORRETAMENTE
-        rect_visual = self.image.get_rect() 
-        
-        fator_reducao = 0.6 
-        
-        nova_largura = int(rect_visual.width * fator_reducao)
-        nova_altura = int(rect_visual.height * fator_reducao)
-        
-        self.rect = pygame.Rect(0, 0, nova_largura, nova_altura)
-
-        spawn_pos = rect_visual.copy()
-        
-        lado = random.choice(['cima', 'baixo', 'esquerda', 'direita'])
-        
-        if lado == 'cima':
-            # Usa spawn_pos.width, que agora reflete o tamanho escalado (correto)
-            spawn_pos.x = random.randint(0, config.LARGURA_MUNDO - spawn_pos.width) 
-            spawn_pos.y = -spawn_pos.height
-        elif lado == 'baixo':
-            spawn_pos.x = random.randint(0, config.LARGURA_MUNDO - spawn_pos.width)
-            spawn_pos.y = config.ALTURA_MUNDO
-        elif lado == 'esquerda':
-            spawn_pos.x = -spawn_pos.width
-            spawn_pos.y = random.randint(0, config.ALTURA_MUNDO - spawn_pos.height)
+        if FRAMES_INIMIGO is not None:
+            self._frames = FRAMES_INIMIGO
+            self._frames_flipped = [pygame.transform.flip(f, True, False) for f in FRAMES_INIMIGO]
         else:
-            spawn_pos.x = config.LARGURA_MUNDO
-            spawn_pos.y = random.randint(0, config.ALTURA_MUNDO - spawn_pos.height)
-            
-        self.rect.center = spawn_pos.center
+            self._frames = [self.image]
+            self._frames_flipped = [pygame.transform.flip(self.image, True, False)]
+
+        lado = random.choice(['cima', 'baixo', 'esquerda', 'direita'])
+
+        if lado == 'cima':
+            self.rect.x = random.randint(0, config.LARGURA_MUNDO - self.rect.width)
+            self.rect.y = -self.rect.height
+        elif lado == 'baixo':
+            self.rect.x = random.randint(0, config.LARGURA_MUNDO - self.rect.width)
+            self.rect.y = config.ALTURA_MUNDO
+        elif lado == 'esquerda':
+            self.rect.x = -self.rect.width
+            self.rect.y = random.randint(0, config.ALTURA_MUNDO - self.rect.height)
+        else:
+            self.rect.x = config.LARGURA_MUNDO
+            self.rect.y = random.randint(0, config.ALTURA_MUNDO - self.rect.height)
 
     def update(self):
         dx = self.jogador.rect.centerx - self.rect.centerx
@@ -98,3 +105,14 @@ class Inimigo(pygame.sprite.Sprite):
             dx, dy = dx / dist, dy / dist
         self.rect.x += dx * self.vel
         self.rect.y += dy * self.vel
+
+        virar = (self.jogador.rect.centerx > self.rect.centerx)
+
+        idx = getattr(self, "anim_index", 0) % len(self._frames)
+
+        frame = self._frames_flipped[idx] if virar else self._frames[idx]
+
+        old_center = self.rect.center
+        self.image = frame
+        self.rect = self.image.get_rect()
+        self.rect.center = old_center
