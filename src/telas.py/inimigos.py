@@ -5,7 +5,7 @@ import config
 
 # Variáveis globais (ou definidas em config.py, mas movidas para cá se for o caso)
 # Se você tiver estas variáveis em config.py, pode removê-las de lá.
-SPRITE_SHEET_PATH = "assets/imagens/Inimigo_Sprite_Sheet.png"
+SPRITE_SHEET_PATH = config.resource_path("assets/imagens/Inimigo_Sprite_Sheet.png")
 LINHAS_INIMIGO = 3
 COLUNAS_INIMIGO = 5
 

@@ -1,5 +1,14 @@
+from importlib.simple import ResourceContainer
 import os
+import sys
 import pygame
+
+
+def resource_path(relative_path):
+    if hasattr(sys, "_MEIPASS"):
+        return os.path.join(sys._MEIPASS, relative_path)
+    return os.path.join(os.path.dirname(__file__), relative_path)
+
 
 # CONFIGURAÇÃO DE TELA
 LARGURA_TELA = 800
@@ -15,12 +24,12 @@ CINZA = (128, 128, 128)
 AMARELO = (255, 255, 0)
 
 # PATHS
-CAMINHO_FUNDO = os.path.join(os.path.dirname(__file__), '..', '..', 'assets', 'imagens', 'background.jpg')
-CAMINHO_FRAMES = "assets/frames"
-CAMINHO_CORACAO_CHEIO = "assets/imagens/coracao.png"
-CAMINHO_CORACAO_VAZIO = "assets/imagens/coracaovazio.png"
-CAMINHO_FONTE = "assets/fontes/fonte_pixel.ttf"
-CAMINHO_MUSICA = "assets/sons/musica_intro.mp3"
+CAMINHO_FUNDO = resource_path("assets/imagens/background.jpg")
+CAMINHO_FRAMES = resource_path("assets/frames")
+CAMINHO_CORACAO_CHEIO = resource_path("assets/imagens/coracao.png")
+CAMINHO_CORACAO_VAZIO = resource_path("assets/imagens/coracaovazio.png")
+CAMINHO_FONTE = resource_path("assets/fontes/fonte_pixel.ttf")
+CAMINHO_MUSICA = resource_path("assets/sons/musica_intro.mp3")
 
 # FUNDO
 FUNDO = pygame.image.load(CAMINHO_FUNDO)
@@ -31,6 +40,7 @@ ALTURA_MUNDO = int(altura_original * ESCALA_FUNDO)
 FUNDO = pygame.transform.scale(FUNDO, (LARGURA_MUNDO, ALTURA_MUNDO))
 
 CLOCK = pygame.time.Clock()
+
 
 # Carrega frames de fundo (opcional)
 def carregar_frames():
@@ -52,9 +62,11 @@ def carregar_frames():
         frames = [frame]
     return frames
 
+
 # DESENHAR FUNDO
 def desenhar_fundo(tela, camera_x=0, camera_y=0):
     tela.blit(FUNDO, (-camera_x, -camera_y))
+
 
 # FUNÇÃO DE TEXTO COM GRADIENTE E BORDA
 def cores_textos(texto, fonte, cor1, cor2, borda=3):
@@ -70,11 +82,15 @@ def cores_textos(texto, fonte, cor1, cor2, borda=3):
 
     gradiente.blit(texto_surface, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
 
-    borda_surface = pygame.Surface((largura + borda*2, altura + borda*2), pygame.SRCALPHA)
-    for dx in range(-borda, borda+1):
-        for dy in range(-borda, borda+1):
+    borda_surface = pygame.Surface(
+        (largura + borda * 2, altura + borda * 2), pygame.SRCALPHA
+    )
+    for dx in range(-borda, borda + 1):
+        for dy in range(-borda, borda + 1):
             if dx != 0 or dy != 0:
-                borda_surface.blit(fonte.render(texto, True, (0, 0, 0)), (dx+borda, dy+borda))
-    
+                borda_surface.blit(
+                    fonte.render(texto, True, (0, 0, 0)), (dx + borda, dy + borda)
+                )
+
     borda_surface.blit(gradiente, (borda, borda))
     return borda_surface
