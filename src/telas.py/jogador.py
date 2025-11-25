@@ -1,33 +1,42 @@
 import config
 import pygame
 
+SCALE_PLAYER = 0.7  # escala do jogador (reduz tamanho visual e a hitbox)
+
 class Jogador(pygame.sprite.Sprite):
     def __init__(self, x, y, velocidade=5):
         super().__init__()
-        self.image = pygame.Surface((40, 40))
+        # cria superfície e escala para o tamanho desejado
+        base_w, base_h = 40, 40
+        w = int(base_w * SCALE_PLAYER)
+        h = int(base_h * SCALE_PLAYER)
+        self.image = pygame.Surface((w, h), pygame.SRCALPHA).convert_alpha()
         self.image.fill((255, 255, 0))
         self.rect = self.image.get_rect(topleft=(x, y))
-        self.velocidade = velocidade
-        self.alpha = 255
-        self.alpha_sentido = -15 
 
-        # Atributos base
+        # MOVIMENTO
+        self.velocidade = velocidade
         self.vel_base = 5
         self.vel = self.vel_base
+
+        # TIRO
         self.tiros_ativos = 1
         self.vel_tiro = 6
-        self.escudo = False
-        self.perks_ativos = {}
+
+        # VIDA
         self.vida = 3
         self.invencivel = False
         self.tempo_invencivel = 1500
         self.ultimo_hit = 0
+        self.alpha = 255
+        self.alpha_sentido = -15
 
+        # PERKS
+        self.escudo = False
+        self.perks_ativos = {}
 
+    # MOVIMENTO
     def mover(self, teclas):
-        velocidade = self.vel
-
-        # Movimentação
         if teclas[pygame.K_LEFT] or teclas[pygame.K_a]:
             self.rect.x -= self.velocidade
         if teclas[pygame.K_RIGHT] or teclas[pygame.K_d]:
@@ -37,7 +46,7 @@ class Jogador(pygame.sprite.Sprite):
         if teclas[pygame.K_DOWN] or teclas[pygame.K_s]:
             self.rect.y += self.velocidade
 
-        # Limites do mundo (sem bordas invisíveis extras)
+        # LIMITES DO MUNDO
         if self.rect.left < 0:
             self.rect.left = 0
         if self.rect.right > config.LARGURA_MUNDO:
@@ -47,10 +56,19 @@ class Jogador(pygame.sprite.Sprite):
         if self.rect.bottom > config.ALTURA_MUNDO:
             self.rect.bottom = config.ALTURA_MUNDO
 
+    # DANO + INVENCIBILIDADE ANIMADA
     def levar_dano(self, quantidade=1):
         agora = pygame.time.get_ticks()
 
         if self.invencivel:
+            return
+
+        if self.escudo:
+            # escudo evita o próximo hit
+            self.escudo = False
+            # opcional: deixar piscando um pouco ao perder o escudo
+            self.invencivel = True
+            self.ultimo_hit = agora
             return
 
         self.vida -= quantidade
@@ -59,6 +77,7 @@ class Jogador(pygame.sprite.Sprite):
 
         self.invencivel = True
         self.ultimo_hit = agora
+
         self.alpha = 255
         self.alpha_sentido = -15
 
@@ -76,42 +95,67 @@ class Jogador(pygame.sprite.Sprite):
                 self.invencivel = False
                 self.image.set_alpha(255)
                 self.alpha = 255
-        else:
-            self.image.set_alpha(255)
 
+    # SISTEMA DE PERKS
     def aplicar_perk(self, perk):
-        agora = pygame.time.get_ticks()
-        duracao = 25000
-        self.perks_ativos[perk] = agora + duracao
+        # adiciona stack
+        if perk not in self.perks_ativos:
+            self.perks_ativos[perk] = 1
+        else:
+            self.perks_ativos[perk] += 1
 
-        # Efeitos das perks
+        stacks = self.perks_ativos[perk]
+
+        # -------------------------------
+        # PERK: TIRO DUPLO (AGORA STACKA)
+        # -------------------------------
         if perk == "Tiro duplo":
-            self.tiros_ativos = 2
+            # Cada stack: +1 tiro e -1 vel de tiro
+            self.tiros_ativos = 1 + stacks  
+            self.vel_tiro = max(3, 6 - (stacks - 1))  # diminui, mas não passa de 3
+
+        # -----------------------------------------
+        # PERK: AUMENTO DE VELOCIDADE DE MOVIMENTO
+        # -----------------------------------------
         elif perk == "Aumento de velocidade de movimento":
-            self.vel = self.vel_base * 1.2
+            self.vel = self.vel_base * (1 + 0.3 * stacks)
+
+        # -----------------------
+        # PERK: TIROS MAIS RÁPIDOS
+        # -----------------------
         elif perk == "Tiros mais rápidos":
-            self.vel_tiro = 15
+            self.vel_tiro = 6 + (1.5 * stacks)
+
+        # -----------------------
+        # PERK: ESCUDO PROTETOR
+        # -----------------------
         elif perk == "Escudo protetor":
+            agora = pygame.time.get_ticks()
+            duracao = 8000 * stacks  # cada stack = +8s
+            self.perks_ativos["Escudo protetor"] = agora + duracao
             self.escudo = True
 
     def atualizar_perks(self):
         agora = pygame.time.get_ticks()
-        expirados = [p for p, fim in self.perks_ativos.items() if fim < agora]
-        for p in expirados:
-            self.remover_perk(p)
+
+        if "Escudo protetor" in self.perks_ativos:
+            tempo_final = self.perks_ativos["Escudo protetor"]
+            if isinstance(tempo_final, int) and agora > tempo_final:
+                self.escudo = False
+                del self.perks_ativos["Escudo protetor"]
 
     def remover_perk(self, perk):
         if perk in self.perks_ativos:
             del self.perks_ativos[perk]
 
-        # Reverter efeitos
         if perk == "Tiro duplo":
-            self.tiros_ativos = 1
-        elif perk == "Velocidade +20%":
+            self.tiros_ativos = max(1, self.tiros_ativos - 1)
+
+        elif perk == "Aumento de velocidade de movimento":
             self.vel = self.vel_base
-        elif perk == "Escudo protetor":
-            self.escudo = False
+
         elif perk == "Tiros mais rápidos":
             self.vel_tiro = 6
-        elif perk == "Mais tiros simultâneos":
-            self.tiros_ativos = 1
+
+        elif perk == "Escudo protetor":
+            self.escudo = False

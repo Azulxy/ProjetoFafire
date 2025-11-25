@@ -2,95 +2,86 @@ import pygame
 import random
 import math
 import config
+import os
 
-# Variáveis globais (ou definidas em config.py, mas movidas para cá se for o caso)
-# Se você tiver estas variáveis em config.py, pode removê-las de lá.
-SPRITE_SHEET_PATH = config.resource_path("assets/imagens/Inimigo_Sprite_Sheet.png")
+SPRITE_SHEET_PATH = "assets/imagens/Inimigo_Sprite_Sheet.png"
 LINHAS_INIMIGO = 3
 COLUNAS_INIMIGO = 5
 
-# Variável para armazenar os frames e o sprite sheet, inicialmente None
-FRAMES_INIMIGO = None
-sprite_inimigo = None
+FRAME_FIXO = None
 FRAME_LARGURA = 0
 FRAME_ALTURA = 0
+SCALE_INIMIGO = 1.0  # escala do sprite (menor que o original)
 
-def carregar_frames_inimigo(corte_topo=0):
-    global FRAMES_INIMIGO, sprite_inimigo, FRAME_LARGURA, FRAME_ALTURA
-    
-    if FRAMES_INIMIGO is not None:
-        return
 
-    sprite_inimigo = pygame.image.load(SPRITE_SHEET_PATH).convert_alpha()
+def carregar_frame_inimigo(corte_topo=0):
+    global FRAME_FIXO, FRAME_LARGURA, FRAME_ALTURA
 
-    FRAME_LARGURA = sprite_inimigo.get_width() // COLUNAS_INIMIGO
-    FRAME_ALTURA  = sprite_inimigo.get_height() // LINHAS_INIMIGO
+    if FRAME_FIXO is not None:
+        return FRAME_FIXO
 
-    frames = []
+    sprite = pygame.image.load(SPRITE_SHEET_PATH).convert_alpha()
 
-    for linha in range(LINHAS_INIMIGO):
-        for coluna in range(COLUNAS_INIMIGO):
+    FRAME_LARGURA = sprite.get_width() // COLUNAS_INIMIGO
+    FRAME_ALTURA = sprite.get_height() // LINHAS_INIMIGO
 
-            # Frame original do sprite sheet
-            original_rect = pygame.Rect(
-                coluna * FRAME_LARGURA,
-                linha * FRAME_ALTURA,
-                FRAME_LARGURA,
-                FRAME_ALTURA
-            )
-            frame = sprite_inimigo.subsurface(original_rect).copy().convert_alpha()
+    # --- PEGA SÓ O FRAME 0,0 (primeiro da sheet) ---
+    original = pygame.Rect(0, 0, FRAME_LARGURA, FRAME_ALTURA)
+    frame = sprite.subsurface(original).copy().convert_alpha()
 
-            # CORTA DO TOPO
-            pixels_corte_topo = int(FRAME_ALTURA * corte_topo)
+    # --- APLICAR MESMOS CORTES DO SEU SISTEMA ---
+    pixels_corte_topo = int(FRAME_ALTURA * corte_topo)
+    corte_esquerda = int(FRAME_LARGURA * 0.15)
 
-            # CORTA 15% DA ESQUERDA
-            corte_esquerda = int(FRAME_LARGURA * 0.15)
+    crop_rect = pygame.Rect(
+        corte_esquerda,
+        pixels_corte_topo,
+        FRAME_LARGURA - corte_esquerda,
+        FRAME_ALTURA - pixels_corte_topo
+    )
 
-            cropped_rect = pygame.Rect(
-                corte_esquerda,
-                pixels_corte_topo,
-                FRAME_LARGURA - corte_esquerda,
-                FRAME_ALTURA - pixels_corte_topo
-            )
+    frame = frame.subsurface(crop_rect).copy().convert_alpha()
 
-            frame = frame.subsurface(cropped_rect).copy().convert_alpha()
+    # --- ESCALA ---
+    nova_w = int(frame.get_width() * SCALE_INIMIGO)
+    nova_h = int(frame.get_height() * SCALE_INIMIGO)
+    frame = pygame.transform.smoothscale(frame, (nova_w, nova_h))
 
-            frames.append(frame)
-
-    FRAMES_INIMIGO = frames
-
+    FRAME_FIXO = frame
+    return FRAME_FIXO
 
 
 class Inimigo(pygame.sprite.Sprite):
-    def __init__(self, jogador, scale=1.0):
+    def __init__(self, jogador, vel_bonus=0):
         super().__init__()
-        carregar_frames_inimigo(corte_topo=0.3)
-
-
 
         self.jogador = jogador
-        self.vel = random.uniform(1.5, 3.0)
+        self.frame_base = carregar_frame_inimigo(corte_topo=0.3)
 
-        # Frame exibido
-        self.image = FRAMES_INIMIGO[0]
+        # frame normal e espelhado
+        self.frame_normal = self.frame_base
+        self.frame_flip = pygame.transform.flip(self.frame_base, True, False)
+
+        # ESCALA DO INIMIGO (MENOR)
+        escala = 0.55
+        self.frame_normal = pygame.transform.scale_by(self.frame_normal, escala)
+        self.frame_flip = pygame.transform.scale_by(self.frame_flip, escala)
+
+        self.image = self.frame_normal
         self.rect = self.image.get_rect()
 
-        if FRAMES_INIMIGO is not None:
-            self._frames = FRAMES_INIMIGO
-            self._frames_flipped = [pygame.transform.flip(f, True, False) for f in FRAMES_INIMIGO]
-        else:
-            self._frames = [self.image]
-            self._frames_flipped = [pygame.transform.flip(self.image, True, False)]
+        # VELOCIDADE
+        self.vel = random.uniform(1.4, 2.2) + vel_bonus
 
+        # POSIÇÃO INICIAL
         lado = random.choice(['cima', 'baixo', 'esquerda', 'direita'])
-
-        if lado == 'cima':
+        if lado == "cima":
             self.rect.x = random.randint(0, config.LARGURA_MUNDO - self.rect.width)
             self.rect.y = -self.rect.height
-        elif lado == 'baixo':
+        elif lado == "baixo":
             self.rect.x = random.randint(0, config.LARGURA_MUNDO - self.rect.width)
             self.rect.y = config.ALTURA_MUNDO
-        elif lado == 'esquerda':
+        elif lado == "esquerda":
             self.rect.x = -self.rect.width
             self.rect.y = random.randint(0, config.ALTURA_MUNDO - self.rect.height)
         else:
@@ -98,21 +89,22 @@ class Inimigo(pygame.sprite.Sprite):
             self.rect.y = random.randint(0, config.ALTURA_MUNDO - self.rect.height)
 
     def update(self):
+        # MOVIMENTO EM LINHA RETA EM DIREÇÃO AO PLAYER
         dx = self.jogador.rect.centerx - self.rect.centerx
         dy = self.jogador.rect.centery - self.rect.centery
         dist = math.hypot(dx, dy)
-        if dist != 0:
-            dx, dy = dx / dist, dy / dist
-        self.rect.x += dx * self.vel
-        self.rect.y += dy * self.vel
+        if dist == 0:
+            dist = 1
 
-        virar = (self.jogador.rect.centerx > self.rect.centerx)
+        dir_x = dx / dist
+        dir_y = dy / dist
 
-        idx = getattr(self, "anim_index", 0) % len(self._frames)
+        # APLICAR MOVIMENTO
+        self.rect.x += dir_x * self.vel
+        self.rect.y += dir_y * self.vel
 
-        frame = self._frames_flipped[idx] if virar else self._frames[idx]
-
+        # VIRAR SPRITE NA DIREÇÃO DO PLAYER
+        virar_direita = dx > 0
         old_center = self.rect.center
-        self.image = frame
-        self.rect = self.image.get_rect()
-        self.rect.center = old_center
+        self.image = self.frame_flip if virar_direita else self.frame_normal
+        self.rect = self.image.get_rect(center=old_center)

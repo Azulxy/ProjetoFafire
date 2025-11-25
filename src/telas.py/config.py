@@ -1,4 +1,3 @@
-from importlib.simple import ResourceContainer
 import os
 import sys
 import pygame
@@ -15,6 +14,17 @@ LARGURA_TELA = 800
 ALTURA_TELA = 600
 FPS = 60
 
+# ★ ADICIONADO: controle de fullscreen
+FULLSCREEN_ATIVADO = True 
+TELA = None
+
+
+def aplicar_fullscreen():
+    global TELA
+    flags = pygame.FULLSCREEN if FULLSCREEN_ATIVADO else 0
+    TELA = pygame.display.set_mode((LARGURA_TELA, ALTURA_TELA), flags)
+
+
 # CORES
 BRANCO = (255, 255, 255)
 PRETO = (0, 0, 0)
@@ -24,12 +34,12 @@ CINZA = (128, 128, 128)
 AMARELO = (255, 255, 0)
 
 # PATHS
-CAMINHO_FUNDO = resource_path("assets/imagens/background.jpg")
-CAMINHO_FRAMES = resource_path("assets/frames")
-CAMINHO_CORACAO_CHEIO = resource_path("assets/imagens/coracao.png")
-CAMINHO_CORACAO_VAZIO = resource_path("assets/imagens/coracaovazio.png")
-CAMINHO_FONTE = resource_path("assets/fontes/fonte_pixel.ttf")
-CAMINHO_MUSICA = resource_path("assets/sons/musica_intro.mp3")
+CAMINHO_FUNDO = "assets/imagens/background.jpg"
+CAMINHO_FRAMES = "assets/frames"
+CAMINHO_CORACAO_CHEIO = "assets/imagens/coracao.png"
+CAMINHO_CORACAO_VAZIO = "assets/imagens/coracaovazio.png"
+CAMINHO_FONTE = "assets/fontes/fonte_pixel.ttf"
+CAMINHO_MUSICA = "assets/sons/musica_intro.mp3"
 
 # FUNDO
 FUNDO = pygame.image.load(CAMINHO_FUNDO)

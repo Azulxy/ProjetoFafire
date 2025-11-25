@@ -5,13 +5,14 @@ import config
 VOLUME_MUSICA = 0.5
 
 def desenhar_slider(tela, x, y, largura, altura, valor):
-    # Fundo do slider
     pygame.draw.rect(tela, (100, 100, 100), (x, y, largura, altura))
-    # Barra preenchida
     largura_preenchida = int(largura * valor)
     pygame.draw.rect(tela, (0, 200, 255), (x, y, largura_preenchida, altura))
-    # Botão circular
-    pygame.draw.circle(tela, (255, 255, 255), (x + largura_preenchida, y + altura // 2), altura // 2 + 4)
+    pygame.draw.circle(
+        tela, (255, 255, 255),
+        (x + largura_preenchida, y + altura // 2),
+        altura // 2 + 4
+    )
 
 def atualizar_volume(valor):
     global VOLUME_MUSICA
@@ -26,14 +27,25 @@ def mostrar_tela_config(tela, frames, indice_frame, clock):
     velocidade_animacao = 0.1
 
     fonte_titulo = pygame.font.Font(config.CAMINHO_FONTE, 64)
-    titulo = config.cores_textos("CONFIGURAÇÕES", fonte_titulo, (0, 150, 255), (0, 255, 100), borda=4)
+    titulo = config.cores_textos(
+        "CONFIGURAÇÕES", fonte_titulo,
+        (0, 150, 255), (0, 255, 100), borda=4
+    )
 
-    # Slider de volume
+    # Slider
     slider_x = config.LARGURA_TELA // 2 - 150
     slider_y = 250
     slider_largura = 300
     slider_altura = 15
     arrastando = False
+
+    # Botão FULLSCREEN
+    fonte_botao = pygame.font.Font(config.CAMINHO_FONTE, 32)
+    texto_botao = lambda: (
+        "Fullscreen: OFF" if config.FULLSCREEN_ATIVADO else "Fullscreen: ON"
+    )
+    botao_render = fonte_botao.render(texto_botao(), True, (255, 255, 255))
+    botao_rect = botao_render.get_rect(center=(config.LARGURA_TELA // 2, 430))
 
     while rodando:
         tempo += clock.get_time() / 1000
@@ -42,12 +54,31 @@ def mostrar_tela_config(tela, frames, indice_frame, clock):
             tempo = 0
 
         tela.blit(frames[indice_frame], (0, 0))
-        tela.blit(titulo, (config.LARGURA_TELA // 2 - titulo.get_width() // 2, 100))
+        tela.blit(titulo, (
+            config.LARGURA_TELA // 2 - titulo.get_width() // 2,
+            100
+        ))
 
-        # Texto e slider
-        texto_volume = pygame.font.Font(config.CAMINHO_FONTE, 32).render("Volume da Música", True, (255, 255, 255))
-        tela.blit(texto_volume, (config.LARGURA_TELA // 2 - texto_volume.get_width() // 2, slider_y - 40))
-        desenhar_slider(tela, slider_x, slider_y, slider_largura, slider_altura, VOLUME_MUSICA)
+        texto_volume = pygame.font.Font(config.CAMINHO_FONTE, 32).render(
+            "Volume da Música", True, (255, 255, 255)
+        )
+        tela.blit(
+            texto_volume,
+            (config.LARGURA_TELA // 2 - texto_volume.get_width() // 2,
+             slider_y - 40)
+        )
+
+        desenhar_slider(
+            tela, slider_x, slider_y,
+            slider_largura, slider_altura,
+            VOLUME_MUSICA
+        )
+
+        # BOTÃO FULLSCREEN
+        botao_render = fonte_botao.render(texto_botao(), True, (255, 255, 255))
+        botao_rect = botao_render.get_rect(center=(config.LARGURA_TELA // 2, 430))
+        pygame.draw.rect(tela, (0, 0, 0), botao_rect.inflate(20, 10), border_radius=10)
+        tela.blit(botao_render, botao_rect)
 
         # Instrução
         instrucao = config.cores_textos(
@@ -55,10 +86,14 @@ def mostrar_tela_config(tela, frames, indice_frame, clock):
             pygame.font.Font(config.CAMINHO_FONTE, 32),
             (255, 200, 0), (255, 50, 50), borda=2
         )
-        tela.blit(instrucao, (config.LARGURA_TELA // 2 - instrucao.get_width() // 2, 350))
+        tela.blit(
+            instrucao,
+            (config.LARGURA_TELA // 2 - instrucao.get_width() // 2, 520)
+        )
 
-        # Eventos
+        # EVENTOS
         for evento in pygame.event.get():
+
             if evento.type == pygame.QUIT:
                 rodando = False
 
@@ -67,10 +102,18 @@ def mostrar_tela_config(tela, frames, indice_frame, clock):
                     rodando = False
 
             elif evento.type == pygame.MOUSEBUTTONDOWN:
+                mx, my = pygame.mouse.get_pos()
+
+                # Slider
                 if evento.button == 1:
-                    mx, my = pygame.mouse.get_pos()
                     if slider_x <= mx <= slider_x + slider_largura and slider_y - 10 <= my <= slider_y + 30:
                         arrastando = True
+
+                # Botão FULLSCREEN
+                if evento.button == 1 and botao_rect.collidepoint(mx, my):
+                    config.FULLSCREEN_ATIVADO = not config.FULLSCREEN_ATIVADO
+                    config.aplicar_fullscreen()
+                    tela = config.TELA  # atualizar o handle da tela
 
             elif evento.type == pygame.MOUSEBUTTONUP:
                 if evento.button == 1:
@@ -83,4 +126,3 @@ def mostrar_tela_config(tela, frames, indice_frame, clock):
 
         pygame.display.flip()
         clock.tick(config.FPS)
-

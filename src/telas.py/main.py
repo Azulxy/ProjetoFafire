@@ -1,4 +1,5 @@
 import pygame
+import tela_instrucoes
 import jogo
 import config
 import tela_inicial
@@ -10,35 +11,49 @@ def main():
     pygame.init()
     tela = pygame.display.set_mode((config.LARGURA_TELA, config.ALTURA_TELA))
     pygame.display.set_caption("Crise dos Oceanos")
+
     frames = config.carregar_frames()
     indice_frame = 0
     clock = config.CLOCK
+
     rodando = True
 
     while rodando:
-        # --- Tela inicial ---
-        continuar, indice_frame = tela_inicial.mostrar_tela_inicial(tela, frames, indice_frame, clock)
 
+        # Tela inicial
+        continuar, indice_frame = tela_inicial.mostrar_tela_inicial(
+            tela, frames, indice_frame, clock
+        )
         if not continuar:
             break
 
-        # --- Menu ---
+        # Menu
         menu_ativo = True
-
         while menu_ativo:
-            indice_menu, indice_frame = tela_menu.mostrar_tela_menu(tela, frames, indice_frame, clock)
 
-            if indice_menu == 0:  # Jogar
-                voltar_menu = jogo.jogo_init()
-                menu_ativo = False
+            indice_menu, indice_frame = tela_menu.mostrar_tela_menu(
+                tela, frames, indice_frame, clock
+            )
 
-                if not voltar_menu:
+            # JOGAR
+            if indice_menu == 0:
+                resultado = tela_instrucoes.tela_instrucoes(tela)
+
+                if resultado == 0:  
+                    jogo.jogo_init()  # inicia jogo
+                elif resultado == 2:
                     rodando = False
 
-            elif indice_menu == 1:  # Configurações
-                tela_config.mostrar_tela_config(tela, frames, indice_frame, clock)
+                menu_ativo = False
 
-            elif indice_menu == 2:  # Sair
+            # CONFIG
+            elif indice_menu == 1:
+                tela_config.mostrar_tela_config(
+                    tela, frames, indice_frame, clock
+                )
+
+            # SAIR
+            elif indice_menu == 2:
                 rodando = False
                 menu_ativo = False
 
