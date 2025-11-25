@@ -14,8 +14,8 @@ LARGURA_TELA = 800
 ALTURA_TELA = 600
 FPS = 60
 
-# ★ ADICIONADO: controle de fullscreen
-FULLSCREEN_ATIVADO = True 
+# controle de fullscreen
+FULLSCREEN_ATIVADO = False
 TELA = None
 
 
@@ -23,6 +23,7 @@ def aplicar_fullscreen():
     global TELA
     flags = pygame.FULLSCREEN if FULLSCREEN_ATIVADO else 0
     TELA = pygame.display.set_mode((LARGURA_TELA, ALTURA_TELA), flags)
+    return TELA
 
 
 # CORES

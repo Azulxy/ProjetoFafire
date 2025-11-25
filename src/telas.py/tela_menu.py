@@ -50,10 +50,12 @@ def mostrar_tela_menu(tela, frames, indice_frame, clock):
                 indice = 2
 
             elif evento.type == pygame.KEYDOWN:
-                if evento.key == pygame.K_DOWN:
+                # Navegação para BAIXO (S ou Seta Baixo)
+                if evento.key == pygame.K_DOWN or evento.key == pygame.K_s:
                     indice = (indice + 1) % len(opcoes_texto)
 
-                elif evento.key == pygame.K_UP:
+                # Navegação para CIMA (W ou Seta Cima)
+                elif evento.key == pygame.K_UP or evento.key == pygame.K_w:
                     indice = (indice - 1) % len(opcoes_texto)
 
                 elif evento.key == pygame.K_RETURN:

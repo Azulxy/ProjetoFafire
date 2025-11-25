@@ -42,10 +42,8 @@ def mostrar_tela_config(tela, frames, indice_frame, clock):
     # Botão FULLSCREEN
     fonte_botao = pygame.font.Font(config.CAMINHO_FONTE, 32)
     texto_botao = lambda: (
-        "Fullscreen: OFF" if config.FULLSCREEN_ATIVADO else "Fullscreen: ON"
+        "Fullscreen: ON" if config.FULLSCREEN_ATIVADO else "Fullscreen: OFF"
     )
-    botao_render = fonte_botao.render(texto_botao(), True, (255, 255, 255))
-    botao_rect = botao_render.get_rect(center=(config.LARGURA_TELA // 2, 430))
 
     while rodando:
         tempo += clock.get_time() / 1000
@@ -53,6 +51,7 @@ def mostrar_tela_config(tela, frames, indice_frame, clock):
             indice_frame = (indice_frame + 1) % len(frames)
             tempo = 0
 
+        # --- SEÇÃO DE DESENHO PRINCIPAL ---
         tela.blit(frames[indice_frame], (0, 0))
         tela.blit(titulo, (
             config.LARGURA_TELA // 2 - titulo.get_width() // 2,
@@ -90,6 +89,7 @@ def mostrar_tela_config(tela, frames, indice_frame, clock):
             instrucao,
             (config.LARGURA_TELA // 2 - instrucao.get_width() // 2, 520)
         )
+        # -----------------------------------
 
         # EVENTOS
         for evento in pygame.event.get():
@@ -113,8 +113,22 @@ def mostrar_tela_config(tela, frames, indice_frame, clock):
                 if evento.button == 1 and botao_rect.collidepoint(mx, my):
                     config.FULLSCREEN_ATIVADO = not config.FULLSCREEN_ATIVADO
                     config.aplicar_fullscreen()
-                    tela = config.TELA  # atualizar o handle da tela
-
+                    tela = config.TELA  # Atualiza o handle da tela LOCAL
+                    
+                    # **********************************************
+                    # 💡 CORREÇÃO: Repintura e Flip Imediato
+                    # Força a atualização da nova Surface do Pygame no mesmo ciclo de evento.
+                    # **********************************************
+                    
+                    # Re-executa as linhas de desenho para a nova tela
+                    tela.blit(frames[indice_frame], (0, 0)) 
+                    tela.blit(titulo, (
+                        config.LARGURA_TELA // 2 - titulo.get_width() // 2,
+                        100
+                    ))
+                    # Note: O Pygame precisa que o flip seja feito após o set_mode e blit na nova surface
+                    pygame.display.flip() 
+                    
             elif evento.type == pygame.MOUSEBUTTONUP:
                 if evento.button == 1:
                     arrastando = False
@@ -124,5 +138,6 @@ def mostrar_tela_config(tela, frames, indice_frame, clock):
                 novo_valor = (mx - slider_x) / slider_largura
                 atualizar_volume(novo_valor)
 
+        # Flip principal (para o próximo frame)
         pygame.display.flip()
         clock.tick(config.FPS)
