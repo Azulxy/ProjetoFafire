@@ -2,7 +2,7 @@ import pygame
 import config
 
 # Defina o caminho para o fundo das instruções (ajuste se necessário)
-FUNDO_INSTRUCOES_PATH = "assets/imagens/fundo_instrucoes.png" 
+FUNDO_INSTRUCOES_PATH = "assets/imagens/tela_instrucao_fundo.png" 
 
 def tela_instrucoes(tela):
     clock = pygame.time.Clock()
